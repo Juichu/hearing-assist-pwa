@@ -1,0 +1,20 @@
+{
+  "name": "個人化輔聽校正系統",
+  "short_name": "輔聽校正",
+  "description": "手機與電腦可執行的個人化輔聽校正、即時輔聽、EQ 與語音清晰化 PWA 原型。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1114",
+  "theme_color": "#0b1114",
+  "lang": "zh-Hant-TW",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

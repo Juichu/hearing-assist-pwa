@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>個人化輔聽器校正介面 Prototype</title>
+  <meta name="theme-color" content="#0b1114" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="輔聽校正" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <style>
+    :root{
+      --bg:#0b1114;--panel:#101a1f;--panel2:#14242b;--ink:#eef8f4;--muted:#8ea29e;
+      --line:rgba(204,255,238,.14);--cyan:#66f2d5;--lime:#c9ff67;--amber:#ffcc66;--red:#ff6b6b;
+      --blue:#66a6ff;--pink:#ff708d;--shadow:0 24px 80px rgba(0,0,0,.35);--r:28px;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;color:var(--ink);font-family:"Microsoft JhengHei","Noto Sans TC",Segoe UI,sans-serif;background:
+      radial-gradient(circle at 10% 10%,rgba(102,242,213,.20),transparent 28%),
+      radial-gradient(circle at 85% 5%,rgba(201,255,103,.15),transparent 24%),
+      linear-gradient(135deg,#071013,#0e171b 45%,#071013);min-height:100vh;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.24;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+    .shell{width:min(1220px,calc(100% - 32px));margin:0 auto;padding:28px 0 48px;position:relative}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px}
+    .brand{display:flex;align-items:center;gap:14px}.logo{width:52px;height:52px;border-radius:18px;background:conic-gradient(from 210deg,var(--cyan),var(--lime),#fff,var(--cyan));box-shadow:0 0 40px rgba(102,242,213,.35);position:relative}.logo:after{content:"";position:absolute;inset:10px;border-radius:12px;background:#0b1114}
+    h1{font-size:clamp(28px,5vw,62px);line-height:.95;margin:12px 0 14px;letter-spacing:-.06em}.kicker{color:var(--cyan);font-weight:800;letter-spacing:.18em;font-size:12px;text-transform:uppercase}.muted{color:var(--muted)}
+    .pill{border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:999px;padding:10px 14px;color:var(--muted);font-size:13px;backdrop-filter:blur(12px)}
+    .grid{display:grid;grid-template-columns:1.08fr .92fr;gap:18px}.card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:22px;position:relative;overflow:hidden;backdrop-filter:blur(16px)}
+    .card:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(110deg,transparent,rgba(255,255,255,.06),transparent);transform:translateX(-120%);animation:sheen 7s infinite}@keyframes sheen{45%,100%{transform:translateX(130%)}}
+    .hero{min-height:360px;padding:30px}.hero p{font-size:18px;max-width:620px;line-height:1.75}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}.btn{border:0;border-radius:18px;padding:14px 18px;font-weight:900;cursor:pointer;color:#061113;background:var(--cyan);box-shadow:0 12px 36px rgba(102,242,213,.22);transition:.2s transform,.2s filter}.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}.btn.secondary{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.lime{background:var(--lime)}
+    .mode-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px}.mode{padding:15px 10px;border:1px solid var(--line);border-radius:18px;text-align:center;background:rgba(0,0,0,.18);cursor:pointer;color:var(--muted)}.mode.active{background:linear-gradient(135deg,rgba(102,242,213,.22),rgba(201,255,103,.14));color:var(--ink);border-color:rgba(102,242,213,.55)}
+    .status{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ear{padding:18px;border-radius:22px;background:rgba(0,0,0,.18);border:1px solid var(--line)}.ear b{display:block;font-size:22px;margin-bottom:6px}.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:var(--lime);box-shadow:0 0 14px var(--lime);margin-right:8px}.dot.warn{background:var(--amber);box-shadow:0 0 14px var(--amber)}
+    .section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:34px 0 14px}.section-title h2{margin:0;font-size:30px;letter-spacing:-.04em}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);padding:10px 13px;border-radius:999px;cursor:pointer}.tab.active{background:var(--ink);color:#071013}
+    .panel{display:none}.panel.active{display:block}.calib{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}.step-list{display:grid;gap:10px}.step{padding:15px;border-radius:20px;background:rgba(0,0,0,.20);border:1px solid var(--line);display:flex;gap:12px;align-items:center}.num{min-width:34px;height:34px;border-radius:12px;background:rgba(102,242,213,.16);display:grid;place-items:center;color:var(--cyan);font-weight:900}.step.done .num{background:var(--lime);color:#061113}.step.now{border-color:rgba(102,242,213,.65)}
+    .testBox{min-height:370px;display:grid;place-items:center;text-align:center}.soundRing{width:190px;height:190px;border-radius:50%;border:1px solid rgba(102,242,213,.35);display:grid;place-items:center;margin:0 auto 18px;background:radial-gradient(circle,rgba(102,242,213,.18),transparent 60%);position:relative}.soundRing:before,.soundRing:after{content:"";position:absolute;inset:18px;border:1px solid rgba(102,242,213,.25);border-radius:50%;animation:pulse 2.4s infinite}.soundRing:after{inset:38px;animation-delay:.5s}@keyframes pulse{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.35);opacity:0}}.freq{font-size:38px;font-weight:950;letter-spacing:-.05em}.progress{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin:18px 0}.bar{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:.4s}
+    .viz{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.chart{width:100%;height:310px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.16));border:1px solid var(--line)}.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--muted)}.sw{width:12px;height:12px;display:inline-block;border-radius:50%;margin-right:6px}.blue{background:var(--blue)}.pink{background:var(--pink)}.cyan{background:var(--cyan)}
+    .eqbars{height:310px;display:flex;align-items:end;gap:10px;padding:20px 12px 40px;border-radius:24px;border:1px solid var(--line);background:rgba(0,0,0,.14);position:relative}.eqbar{flex:1;min-width:28px;border-radius:14px 14px 8px 8px;background:linear-gradient(180deg,var(--lime),var(--cyan));height:30%;position:relative;box-shadow:0 0 20px rgba(102,242,213,.18)}.eqbar span{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}.eqbar i{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-style:normal;font-size:11px;color:var(--ink)}
+    .controls{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.control{padding:18px;border:1px solid var(--line);border-radius:22px;background:rgba(0,0,0,.16)}.control label{display:flex;justify-content:space-between;font-weight:800;margin-bottom:10px}.control input[type=range]{width:100%;accent-color:var(--cyan)}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:9px 11px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--muted);cursor:pointer}.chip.on{background:rgba(201,255,103,.2);color:var(--ink);border-color:rgba(201,255,103,.45)}
+    .notice{border-left:4px solid var(--amber);background:rgba(255,204,102,.09);border-radius:18px;padding:16px;color:#ffe6af;line-height:1.7}.mini{font-size:12px;color:var(--muted);line-height:1.6}.output{font-family:Consolas,monospace;background:#071013;border:1px solid var(--line);border-radius:20px;padding:16px;color:#bdf8ea;white-space:pre-wrap;font-size:12px;max-height:260px;overflow:auto}
+    .device-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.device-card{border:1px solid var(--line);background:rgba(0,0,0,.18);border-radius:18px;padding:14px}.device-card b{display:block;margin-bottom:6px}.device-ok{color:var(--lime)}.device-warn{color:var(--amber)}.device-bad{color:var(--red)}.select{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:12px;background:#071013;color:var(--ink);padding:10px}.meter{height:12px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:8px}.meter-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--lime),var(--amber),var(--red));transition:.12s}.tone-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.volume-row{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:12px}.volume-row input{accent-color:var(--cyan);width:min(260px,100%)}.btn.danger{background:var(--red);color:#fff}.btn.playing{background:var(--amber);color:#071013}.permission-banner{border:1px solid rgba(102,242,213,.35);background:rgba(102,242,213,.08);border-radius:20px;padding:14px;margin-top:14px;text-align:left}
+    .live-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:18px}.live-status{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:9px 12px;color:var(--muted)}.live-led{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}.live-status.on .live-led{background:var(--lime);box-shadow:0 0 14px var(--lime)}.manual-eq{display:grid;gap:12px}.eq-slider{display:grid;grid-template-columns:64px 1fr 58px;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:18px;background:rgba(0,0,0,.14)}.eq-slider input{width:100%;accent-color:var(--lime)}.eq-value{font-family:Consolas,monospace;color:var(--cyan);text-align:right}.live-meter-wrap{height:18px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.live-meter-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:.1s}.compact-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.transcript-box{min-height:190px;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:22px;background:rgba(0,0,0,.20);padding:16px;line-height:1.75;color:#dffdf6}.transcript-line{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)}.transcript-live{color:var(--amber)}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.toggle-row input{width:22px;height:22px;accent-color:var(--lime)}@media(max-width:900px){.live-grid{grid-template-columns:1fr}.eq-slider{grid-template-columns:58px 1fr 52px}.feature-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.grid,.calib,.viz{grid-template-columns:1fr}.mode-row{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.hero{min-height:auto}.status{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><div class="logo"></div><div><div class="kicker">Hearing Assist PWA</div><b>個人化輔聽校正系統</b></div></div>
+      <div class="pill">手機 / 電腦可安裝版 · PWA Prototype</div>
+    </header>
+
+    <div class="notice" id="secureStatus" style="margin-bottom:18px">正在檢查執行環境...</div>
+
+    <main class="grid">
+      <section class="card hero">
+        <div class="kicker">Self Calibration → Hearing Curve → Compensation EQ</div>
+        <h1>讓使用者自己完成聽感校正，系統自動產生安全補償 EQ。</h1>
+        <p class="muted">此網頁展示輔聽器軟體的使用者介面：環境檢查、左右耳校正、聽覺曲線、補償 EQ 與語意化聲音微調。</p>
+        <div class="actions"><button class="btn" onclick="showPanel('calibration')">開始自行校正</button><button class="btn secondary" onclick="showPanel('result')">查看曲線與 EQ</button><button class="btn lime" onclick="simulateResult()">產生示範資料</button></div>
+        <div class="mode-row" id="modes"><div class="mode active">日常</div><div class="mode">對話</div><div class="mode">戶外</div><div class="mode">看電視</div><div class="mode">餐廳</div></div>
+      </section>
+      <aside class="card">
+        <div class="section-title" style="margin-top:0"><h2>校正狀態</h2><span class="pill">Profile A</span></div>
+        <div class="status">
+          <div class="ear"><b>左耳</b><span><i class="dot"></i>已校正</span><p class="mini">高頻需中度補償，人聲清晰度已加強。</p></div>
+          <div class="ear"><b>右耳</b><span><i class="dot warn"></i>建議重測</span><p class="mini">4kHz 資料信心較低，可重新校正。</p></div>
+        </div>
+        <div class="notice" style="margin-top:16px">安全提醒：補償 EQ 不做 1:1 放大，系統會限制最大增益並啟用 limiter，避免刺耳與突然爆音。</div>
+      </aside>
+    </main>
+
+    <div class="section-title"><h2>功能流程</h2><div class="tabs"><button class="tab active" data-panel="calibration">自行校正</button><button class="tab" data-panel="result">曲線 / EQ</button><button class="tab" data-panel="tuning">聲音微調</button><button class="tab" data-panel="live">即時輔聽</button><button class="tab" data-panel="profile">輸出設定</button></div></div>
+
+    <section id="calibration" class="panel active">
+      <div class="calib">
+        <div class="card"><h2>校正步驟</h2><div class="step-list" id="steps"></div><p class="mini">建議流程：先取得麥克風 / 喇叭權限，再測左耳與右耳。每個頻率由使用者按「播放測試聲」觸發，聽到後再按「我聽到了」。</p><div class="permission-banner"><b>裝置權限</b><div class="device-grid"><div class="device-card"><b>麥克風</b><span id="micStatus" class="device-warn">尚未取得權限</span><div class="meter"><div class="meter-fill" id="micMeter"></div></div><div class="mini" id="noiseText">環境音量：未偵測</div></div><div class="device-card"><b>喇叭 / 輸出</b><span id="speakerStatus" class="device-warn">等待偵測</span><select class="select" id="speakerSelect"><option>預設輸出裝置</option></select></div></div><div class="actions"><button class="btn" onclick="requestAudioPermission()">取得 MIC / Speaker 權限</button><button class="btn secondary" onclick="refreshDevices()">重新偵測裝置</button></div><p class="mini">注意：瀏覽器通常只能明確要求麥克風權限；喇叭輸出可偵測/選擇，但實際支援依手機或瀏覽器而定。建議使用 HTTPS 或 localhost 開啟。</p></div></div>
+        <div class="card testBox"><div><div class="soundRing"><div><div class="freq" id="freqText">1 kHz</div><div class="muted" id="earText">左耳測試</div></div></div><h2 id="testTitle">請先播放測試聲</h2><p class="muted">按下「播放測試聲」後，如果剛好聽到聲音，再按「我聽到了」。</p><div class="volume-row"><span class="mini">目前校正音量</span><input id="toneVolume" type="range" min="5" max="65" step="5" value="10" disabled><span class="mini" id="volumeText">10 dB</span></div><div class="progress"><div class="bar" id="calibBar"></div></div><div class="tone-controls"><button class="btn lime" id="playBtn" onclick="playTestTone()">播放目前音量</button><button class="btn secondary" onclick="notHeard()">沒聽到，提高音量</button></div><div class="actions" style="justify-content:center"><button class="btn" onclick="heard()">我聽到了，記錄此音量</button><button class="btn danger" onclick="stopTone()">停止聲音</button><button class="btn secondary" onclick="resetCalibration()">重設</button></div></div></div>
+      </div>
+    </section>
+
+    <section id="result" class="panel">
+      <div class="viz">
+        <div class="card"><div class="section-title" style="margin-top:0"><h2>聽覺曲線</h2><button class="btn secondary" onclick="simulateResult()">重新模擬</button></div><svg id="curveChart" class="chart" viewBox="0 0 680 310" role="img" aria-label="左右耳聽覺曲線"></svg><div class="legend"><span><i class="sw blue"></i>左耳聽閾</span><span><i class="sw pink"></i>右耳聽閾</span><span><i class="sw cyan"></i>建議補償目標</span></div></div>
+        <div class="card"><h2>補償 EQ</h2><div class="eqbars" id="eqBars"></div><p class="mini">EQ 已限制最大增益與相鄰頻段斜率，避免單點過度補償。</p></div>
+      </div>
+    </section>
+
+    <section id="tuning" class="panel">
+      <div class="card"><h2>語意化微調</h2><p class="muted">一般使用者不需要直接調 dB/Hz，用聽感描述即可控制背後 EQ、壓縮與降噪。</p><div class="controls">
+        <div class="control"><label>人聲清楚度 <span id="voiceVal">60</span></label><input id="voice" type="range" min="0" max="100" value="60"></div>
+        <div class="control"><label>聲音明亮度 <span id="brightVal">45</span></label><input id="bright" type="range" min="0" max="100" value="45"></div>
+        <div class="control"><label>環境噪音抑制 <span id="noiseVal">55</span></label><input id="noise" type="range" min="0" max="100" value="55"></div>
+        <div class="control"><label>左右耳平衡 <span id="balanceVal">0</span></label><input id="balance" type="range" min="-50" max="50" value="0"></div>
+      </div><h3>快速聽感按鈕</h3><div class="chips" id="chips"><span class="chip on">自然</span><span class="chip">人聲優先</span><span class="chip">柔和高頻</span><span class="chip">降低風噪</span><span class="chip">餐廳對話</span></div></div>
+    </section>
+
+    <section id="live" class="panel">
+      <div class="live-grid">
+        <div class="card">
+          <div class="section-title" style="margin-top:0"><h2>即時輔聽</h2><span class="live-status" id="liveStatus"><i class="live-led"></i><span>未啟動</span></span></div>
+          <p class="muted">取得 MIC 權限後，將麥克風聲音即時送到喇叭 / 耳機，並套用校正後的補償 EQ。建議使用耳機避免喇叭回授尖叫。</p>
+          <div class="notice">安全提醒：即時輔聽會把麥克風聲音播放到輸出裝置，請先戴耳機、把系統音量調小，再啟動。</div>
+          <div class="device-grid">
+            <div class="device-card"><b>即時輸入</b><span id="liveMicStatus" class="device-warn">尚未連接 MIC</span><div class="live-meter-wrap"><div class="live-meter-fill" id="liveInputMeter"></div></div><div class="mini">MIC Input Level</div></div>
+            <div class="device-card"><b>處理後輸出</b><span id="liveOutputStatus" class="device-warn">尚未啟動</span><div class="live-meter-wrap"><div class="live-meter-fill" id="liveOutputMeter"></div></div><div class="mini">EQ Output Level</div></div>
+          </div>
+          <div class="control" style="margin-top:14px"><label>即時監聽總增益 <span id="liveGainVal">70</span>%</label><input id="liveGain" type="range" min="0" max="100" value="70"></div>
+          <div class="control" style="margin-top:14px"><label>左右聲道平衡 <span id="liveBalanceVal">0</span></label><input id="liveBalance" type="range" min="-50" max="50" value="0"><p class="mini">負值偏左、正值偏右；用來修正即時輔聽左右聲不平衡。</p></div>
+          <div class="feature-grid">
+            <div class="control"><div class="toggle-row"><label for="lowCutToggle">刪除低頻噪音</label><input id="lowCutToggle" type="checkbox" checked></div><label style="margin-top:10px">低頻截止 <span id="lowCutVal">120</span> Hz</label><input id="lowCutFreq" type="range" min="60" max="300" step="10" value="120"><p class="mini">濾除風聲、冷氣聲、手部摩擦與低頻轟鳴。</p></div>
+            <div class="control"><div class="toggle-row"><label for="speechClarityToggle">語音清晰化</label><input id="speechClarityToggle" type="checkbox" checked></div><label style="margin-top:10px">清晰化強度 <span id="clarityVal">55</span>%</label><input id="clarityAmount" type="range" min="0" max="100" value="55"><p class="mini">提升 1k～4kHz 語音子音區，並適度壓低低頻遮蔽。</p></div>
+          </div>
+          <div class="actions"><button class="btn" onclick="startLiveAssist()">啟動即時輔聽</button><button class="btn danger" onclick="stopLiveAssist()">停止即時輔聽</button><button class="btn secondary" onclick="loadCalibratedEq()">載入校正 EQ</button><button class="btn secondary" onclick="resetManualEq()">EQ 歸零</button></div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-top:0"><h2>手動 EQ 增益</h2><span class="pill">即時套用</span></div>
+          <p class="mini">這裡會先帶入校正後補償 EQ，使用者可直接調整每個頻率點。範圍：-12 dB ～ +18 dB。</p>
+          <div class="manual-eq" id="manualEq"></div>
+          <div class="section-title"><h2>周圍說話內容</h2><span class="pill" id="speechStatus">語音辨識未啟動</span></div>
+          <p class="mini">使用瀏覽器 Web Speech API 進行即時語音轉文字。支援度依 Chrome / Edge / 手機瀏覽器而定；需 MIC 權限。</p>
+          <div class="actions"><button class="btn" onclick="startSpeechRecognition()">開始顯示說話內容</button><button class="btn danger" onclick="stopSpeechRecognition()">停止辨識</button><button class="btn secondary" onclick="clearTranscript()">清除文字</button></div>
+          <div class="transcript-box" id="transcriptBox"><div class="muted">等待辨識周圍說話內容...</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="profile" class="panel">
+      <div class="grid"><div class="card"><h2>DSP Pipeline 建議</h2><ol class="muted"><li>Microphone Input / Audio Input</li><li>Noise Reduction</li><li>Personal Compensation EQ</li><li>Dynamic Range Compression</li><li>Feedback Suppression</li><li>Limiter / Safety Output</li></ol><div class="notice">正式產品若稱作醫療輔聽器，需注意法規、音壓校準與臨床驗證。</div></div><div class="card"><h2>Profile JSON</h2><pre class="output" id="jsonOut"></pre></div></div>
+    </section>
+  </div>
+
+  <script>
+    const freqs=[250,500,1000,2000,4000,8000];
+    let step=0, ear='左耳', micStream=null, audioCtx=null, oscillator=null, gainNode=null, panNode=null, analyser=null, meterTimer=null, selectedSpeakerId='';
+    let liveSource=null, liveFilters=[], liveGainNode=null, liveCompressor=null, liveLimiter=null, liveInputAnalyser=null, liveOutputAnalyser=null, liveMeterTimer=null, liveActive=false, liveOutputEl=null, liveDestination=null, livePanNode=null;
+    let lowCutFilter=null, speechPresenceFilter=null, speechRecognition=null, recognizing=false, finalTranscript='';
+    const left=[25,30,35,45,55,60], right=[20,25,30,40,50,55];
+    let measuredLeft=[...left], measuredRight=[...right], eq=[2,4,6,9,12,10];
+    let currentLevelDb=10, minLevelDb=5, maxLevelDb=65, levelStepDb=5;
+    let manualEqGains=[...eq];
+    function $(id){return document.getElementById(id)}
+    function showPanel(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===id));if(id==='result')drawAll();if(id==='live')renderManualEq();if(id==='profile')writeJson();}
+    document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showPanel(t.dataset.panel));
+    document.querySelectorAll('.mode').forEach(m=>m.onclick=()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));m.classList.add('active')});
+
+    async function requestAudioPermission(){
+      try{
+        if(!navigator.mediaDevices?.getUserMedia){throw new Error('此瀏覽器不支援 getUserMedia，請改用 Chrome / Edge / Safari，並使用 HTTPS 或 localhost。')}
+        audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+        await audioCtx.resume();
+        micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+        $('micStatus').textContent='已取得權限';$('micStatus').className='device-ok';
+        setupMicMeter();
+        await refreshDevices();
+        $('testTitle').textContent='請按播放測試聲';
+      }catch(err){
+        $('micStatus').textContent='權限失敗：'+err.message;$('micStatus').className='device-bad';
+        $('noiseText').textContent='提示：手機/電腦瀏覽器需要 HTTPS 或 localhost 才能開啟 MIC 權限。';
+      }
+    }
+    async function refreshDevices(){
+      try{
+        if(!navigator.mediaDevices?.enumerateDevices){return}
+        const devices=await navigator.mediaDevices.enumerateDevices();
+        const outputs=devices.filter(d=>d.kind==='audiooutput');
+        const inputs=devices.filter(d=>d.kind==='audioinput');
+        $('speakerSelect').innerHTML='<option value="">預設輸出裝置</option>'+outputs.map((d,i)=>`<option value="${d.deviceId}">${d.label||'喇叭輸出 '+(i+1)}</option>`).join('');
+        $('speakerStatus').textContent=outputs.length?`已偵測 ${outputs.length} 個輸出裝置`:'使用系統預設輸出';
+        $('speakerStatus').className='device-ok';
+        if(inputs.length && !micStream){$('micStatus').textContent=`偵測到 ${inputs.length} 個 MIC，尚未授權`;}
+      }catch(err){$('speakerStatus').textContent='裝置偵測失敗';$('speakerStatus').className='device-bad'}
+    }
+    $('speakerSelect').onchange=e=>{selectedSpeakerId=e.target.value;};
+    $('toneVolume').oninput=e=>{$('volumeText').textContent=e.target.value+' dB';};
+    function setupMicMeter(){
+      if(!audioCtx||!micStream)return;
+      const src=audioCtx.createMediaStreamSource(micStream);analyser=audioCtx.createAnalyser();analyser.fftSize=512;src.connect(analyser);
+      const data=new Uint8Array(analyser.frequencyBinCount);clearInterval(meterTimer);
+      meterTimer=setInterval(()=>{analyser.getByteTimeDomainData(data);let sum=0;for(const v of data){const x=(v-128)/128;sum+=x*x}const rms=Math.sqrt(sum/data.length);const pct=Math.min(100,Math.round(rms*260));$('micMeter').style.width=pct+'%';$('noiseText').textContent=pct<18?'環境音量：安靜，適合校正':pct<42?'環境音量：稍吵，可校正但可能不準':'環境音量：偏吵，建議換安靜環境';},160);
+    }
+    function dbToSafeAmplitude(db){return Math.min(.28,.004*Math.pow(10,(db-minLevelDb)/42));}
+    function currentFreqIndex(){return Math.min(freqs.length-1,step%freqs.length)}
+    function currentEarName(){return step<freqs.length?'左耳':'右耳'}
+    async function playTestTone(){
+      stopTone();
+      audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();
+      const idx=currentFreqIndex(), freq=freqs[idx], vol=dbToSafeAmplitude(currentLevelDb);
+      oscillator=audioCtx.createOscillator();gainNode=audioCtx.createGain();
+      oscillator.type='sine';oscillator.frequency.value=freq;gainNode.gain.setValueAtTime(0.0001,audioCtx.currentTime);gainNode.gain.exponentialRampToValueAtTime(Math.max(0.001,vol),audioCtx.currentTime+.04);
+      panNode=audioCtx.createStereoPanner?audioCtx.createStereoPanner():null;
+      if(panNode){panNode.pan.value=ear==='左耳'?-1:1;oscillator.connect(gainNode);gainNode.connect(panNode);panNode.connect(audioCtx.destination);}else{oscillator.connect(gainNode);gainNode.connect(audioCtx.destination);}
+      oscillator.start();
+      $('playBtn').textContent='播放中...';$('playBtn').classList.add('playing');$('testTitle').textContent=`${ear}：由小到大校正，正在播放 ${currentLevelDb} dB / ${freq>=1000?freq/1000+' kHz':freq+' Hz'}`;
+      document.querySelector('.soundRing').animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:520});
+      setTimeout(stopTone,900);
+    }
+    function stopTone(){
+      if(gainNode&&audioCtx){try{gainNode.gain.cancelScheduledValues(audioCtx.currentTime);gainNode.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+.03)}catch(e){}}
+      if(oscillator){try{oscillator.stop((audioCtx?.currentTime||0)+.04)}catch(e){} oscillator=null;}
+      $('playBtn').textContent='播放目前音量';$('playBtn').classList.remove('playing');
+    }
+    function renderSteps(){const names=['裝置權限 / 環境檢查','由小到大安全音量','左耳頻率測試','右耳頻率測試','產生聽覺曲線','套用補償 EQ'];$('steps').innerHTML=names.map((n,i)=>`<div class="step ${i<Math.floor(step/2)?'done':''} ${i===Math.floor(step/2)?'now':''}"><div class="num">${i+1}</div><div><b>${n}</b><div class="mini">${i<2?'每個頻率從小聲開始，使用者聽到才記錄':'依聽閾產生補償 EQ，並套入即時輔聽'}</div></div></div>`).join('')}
+    function updateCalib(){
+      const idx=currentFreqIndex();ear=currentEarName();$('freqText').textContent=freqs[idx]>=1000?(freqs[idx]/1000)+' kHz':freqs[idx]+' Hz';$('earText').textContent=`${ear}測試 · ${currentLevelDb} dB`; $('toneVolume').value=currentLevelDb;$('volumeText').textContent=currentLevelDb+' dB';
+      $('calibBar').style.width=Math.min(100,step/(freqs.length*2)*100)+'%';
+      if(step>=freqs.length*2){stopTone();generateEqFromCalibration();$('testTitle').textContent='校正完成，已依左右耳聽閾套入補償 EQ';$('calibBar').style.width='100%';showPanel('result');drawAll();}
+      renderSteps();writeJson();
+    }
+    function notHeard(){stopTone();currentLevelDb=Math.min(maxLevelDb,currentLevelDb+levelStepDb);$('testTitle').textContent=currentLevelDb>=maxLevelDb?'已達最高安全測試音量，若仍聽不到可直接記錄此頻率':'音量已提高，請再次播放測試聲';updateCalib();}
+    function heard(){
+      stopTone();const idx=currentFreqIndex();if(ear==='左耳') measuredLeft[idx]=currentLevelDb; else measuredRight[idx]=currentLevelDb;
+      step++;currentLevelDb=minLevelDb;$('testTitle').textContent='已記錄聽閾，下一個頻率從小聲開始';updateCalib();
+    }
+    function resetCalibration(){stopTone();step=0;currentLevelDb=minLevelDb;measuredLeft=[...left];measuredRight=[...right];eq=[2,4,6,9,12,10];manualEqGains=[...eq];$('testTitle').textContent='請先播放測試聲，系統會由小聲開始';updateCalib();renderManualEq();drawAll();}
+    function generateEqFromCalibration(){
+      eq=freqs.map((f,i)=>{const avg=(measuredLeft[i]+measuredRight[i])/2;let loss=Math.max(0,avg-18);let ratio=f<500?.32:f<2000?.45:f<6000?.55:.42;let cap=f<500?8:f<2000?12:15;return Math.round(Math.min(cap,loss*ratio));});
+      for(let i=1;i<eq.length;i++){if(eq[i]-eq[i-1]>6)eq[i]=eq[i-1]+6;if(eq[i-1]-eq[i]>6)eq[i]=eq[i-1]-6;}
+      manualEqGains=[...eq];renderManualEq();applyLiveEq();
+    }
+    function simulateResult(){measuredLeft=[...left];measuredRight=[...right];generateEqFromCalibration();step=freqs.length*2;showPanel('result');drawAll();}
+    function pt(i,v){const x=58+i*(560/(freqs.length-1));const y=260-(v/70)*210;return [x,y]}
+    function poly(vals){return vals.map((v,i)=>pt(i,v).join(',')).join(' ')}
+    function drawAll(){drawCurve();drawEq();writeJson()}
+    function drawCurve(){const grid=[0,20,40,60].map(v=>`<line x1="50" x2="630" y1="${260-(v/70)*210}" y2="${260-(v/70)*210}" stroke="rgba(255,255,255,.12)"/><text x="18" y="${264-(v/70)*210}" fill="#8ea29e" font-size="12">${v}dB</text>`).join('');const labels=freqs.map((f,i)=>`<text x="${pt(i,0)[0]-14}" y="292" fill="#8ea29e" font-size="12">${f>=1000?f/1000+'k':f}</text>`).join('');const target=eq.map(g=>g*4+12);$('curveChart').innerHTML=`${grid}<line x1="50" x2="630" y1="260" y2="260" stroke="rgba(255,255,255,.22)"/>${labels}<polyline points="${poly(measuredLeft)}" fill="none" stroke="#66a6ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${poly(measuredRight)}" fill="none" stroke="#ff708d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${poly(target)}" fill="none" stroke="#66f2d5" stroke-width="3" stroke-dasharray="8 8" stroke-linecap="round"/>`}
+    function drawEq(){$('eqBars').innerHTML=freqs.map((f,i)=>`<div class="eqbar" style="height:${25+eq[i]*5}%"><i>+${eq[i]}dB</i><span>${f>=1000?f/1000+'k':f}</span></div>`).join('')}
+    function renderManualEq(){
+      $('manualEq').innerHTML=freqs.map((f,i)=>`<div class="eq-slider"><b>${f>=1000?f/1000+'k':f+'Hz'}</b><input type="range" min="-12" max="18" step="1" value="${manualEqGains[i]}" oninput="setManualEq(${i},this.value)"><span class="eq-value" id="manualEqVal${i}">${manualEqGains[i]>=0?'+':''}${manualEqGains[i]} dB</span></div>`).join('');
+    }
+    function setManualEq(i,val){
+      manualEqGains[i]=Number(val);$('manualEqVal'+i).textContent=(manualEqGains[i]>=0?'+':'')+manualEqGains[i]+' dB';
+      if(liveFilters[i]) liveFilters[i].gain.setTargetAtTime(manualEqGains[i],audioCtx.currentTime,.02);
+      writeJson();
+    }
+    function loadCalibratedEq(){manualEqGains=[...eq];renderManualEq();applyLiveEq();writeJson();}
+    function resetManualEq(){manualEqGains=freqs.map(()=>0);renderManualEq();applyLiveEq();writeJson();}
+    function applyLiveEq(){if(!audioCtx)return;liveFilters.forEach((filter,i)=>filter.gain.setTargetAtTime(manualEqGains[i],audioCtx.currentTime,.02));}
+    async function startLiveAssist(){
+      try{
+        stopTone();
+        audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();
+        if(!micStream){await requestAudioPermission();}
+        if(!micStream) throw new Error('尚未取得 MIC 權限');
+        stopLiveAssist(false);
+        liveSource=audioCtx.createMediaStreamSource(micStream);
+        liveInputAnalyser=audioCtx.createAnalyser();liveInputAnalyser.fftSize=512;
+        liveOutputAnalyser=audioCtx.createAnalyser();liveOutputAnalyser.fftSize=512;
+        liveGainNode=audioCtx.createGain();liveGainNode.gain.value=Number($('liveGain').value)/100;
+        livePanNode=audioCtx.createStereoPanner?audioCtx.createStereoPanner():null;if(livePanNode)livePanNode.pan.value=Number($('liveBalance').value)/50;
+        liveCompressor=audioCtx.createDynamicsCompressor();liveCompressor.threshold.value=-30;liveCompressor.knee.value=18;liveCompressor.ratio.value=3;liveCompressor.attack.value=.006;liveCompressor.release.value=.18;
+        liveLimiter=audioCtx.createDynamicsCompressor();liveLimiter.threshold.value=-10;liveLimiter.knee.value=0;liveLimiter.ratio.value=18;liveLimiter.attack.value=.002;liveLimiter.release.value=.08;
+        lowCutFilter=audioCtx.createBiquadFilter();lowCutFilter.type='highpass';lowCutFilter.frequency.value=$('lowCutToggle').checked?Number($('lowCutFreq').value):20;lowCutFilter.Q.value=.7;
+        speechPresenceFilter=audioCtx.createBiquadFilter();speechPresenceFilter.type='peaking';speechPresenceFilter.frequency.value=2600;speechPresenceFilter.Q.value=1.1;speechPresenceFilter.gain.value=$('speechClarityToggle').checked?Number($('clarityAmount').value)/10:0;
+        liveFilters=freqs.map((f,i)=>{const biquad=audioCtx.createBiquadFilter();biquad.type='peaking';biquad.frequency.value=f;biquad.Q.value=f<1000?.9:1.15;biquad.gain.value=manualEqGains[i];return biquad;});
+        let node=liveSource;node.connect(liveInputAnalyser);node.connect(lowCutFilter);lowCutFilter.connect(liveFilters[0]);
+        for(let i=0;i<liveFilters.length-1;i++) liveFilters[i].connect(liveFilters[i+1]);
+        liveFilters[liveFilters.length-1].connect(speechPresenceFilter);speechPresenceFilter.connect(liveCompressor);liveCompressor.connect(liveGainNode);liveGainNode.connect(liveLimiter);
+        if(livePanNode){liveLimiter.connect(livePanNode);livePanNode.connect(liveOutputAnalyser);}else{liveLimiter.connect(liveOutputAnalyser);}
+        if(selectedSpeakerId && audioCtx.createMediaStreamDestination && typeof Audio !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype){
+          liveDestination=audioCtx.createMediaStreamDestination();liveOutputAnalyser.connect(liveDestination);
+          liveOutputEl=liveOutputEl||new Audio();liveOutputEl.srcObject=liveDestination.stream;await liveOutputEl.setSinkId(selectedSpeakerId);await liveOutputEl.play();
+        }else{liveOutputAnalyser.connect(audioCtx.destination);}
+        liveActive=true;updateLiveStatus(true);startLiveMeters();
+      }catch(err){$('liveMicStatus').textContent='啟動失敗：'+err.message;$('liveMicStatus').className='device-bad';updateLiveStatus(false);}
+    }
+    function stopLiveAssist(update=true){
+      try{[liveSource,liveInputAnalyser,liveOutputAnalyser,liveGainNode,liveCompressor,liveLimiter,livePanNode,lowCutFilter,speechPresenceFilter,...liveFilters].forEach(n=>{try{n&&n.disconnect()}catch(e){}})}catch(e){}
+      if(liveOutputEl){try{liveOutputEl.pause();liveOutputEl.srcObject=null;}catch(e){}}
+      clearInterval(liveMeterTimer);liveFilters=[];liveActive=false;if(update)updateLiveStatus(false);
+    }
+    function updateLiveStatus(on){$('liveStatus').classList.toggle('on',on);$('liveStatus').querySelector('span').textContent=on?'即時輔聽中':'未啟動';$('liveMicStatus').textContent=on?'MIC 已連接':'尚未連接 MIC';$('liveMicStatus').className=on?'device-ok':'device-warn';$('liveOutputStatus').textContent=on?'EQ / Limiter 輸出中':'尚未啟動';$('liveOutputStatus').className=on?'device-ok':'device-warn';}
+    function startLiveMeters(){
+      const inputData=new Uint8Array(liveInputAnalyser.frequencyBinCount), outputData=new Uint8Array(liveOutputAnalyser.frequencyBinCount);
+      const level=(an,data)=>{an.getByteTimeDomainData(data);let sum=0;for(const v of data){const x=(v-128)/128;sum+=x*x}return Math.min(100,Math.round(Math.sqrt(sum/data.length)*280));};
+      clearInterval(liveMeterTimer);liveMeterTimer=setInterval(()=>{$('liveInputMeter').style.width=level(liveInputAnalyser,inputData)+'%';$('liveOutputMeter').style.width=level(liveOutputAnalyser,outputData)+'%';},120);
+    }
+    function updateLowCut(){
+      $('lowCutVal').textContent=$('lowCutFreq').value;
+      if(lowCutFilter&&audioCtx){lowCutFilter.frequency.setTargetAtTime($('lowCutToggle').checked?Number($('lowCutFreq').value):20,audioCtx.currentTime,.04);}
+      writeJson();
+    }
+    function updateSpeechClarity(){
+      $('clarityVal').textContent=$('clarityAmount').value;
+      const clarity=$('speechClarityToggle').checked?Number($('clarityAmount').value)/10:0;
+      if(speechPresenceFilter&&audioCtx){speechPresenceFilter.gain.setTargetAtTime(clarity,audioCtx.currentTime,.04);}
+      if(liveFilters.length&&audioCtx){
+        const boost=$('speechClarityToggle').checked?Number($('clarityAmount').value)/28:0;
+        [2,3,4].forEach(i=>liveFilters[i]?.gain.setTargetAtTime(manualEqGains[i]+boost,audioCtx.currentTime,.04));
+        if(liveFilters[0]) liveFilters[0].gain.setTargetAtTime(manualEqGains[0]-boost*.7,audioCtx.currentTime,.04);
+      }
+      writeJson();
+    }
+    function startSpeechRecognition(){
+      const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+      if(!SpeechRecognition){$('speechStatus').textContent='此瀏覽器不支援語音辨識';$('speechStatus').style.color='var(--red)';return;}
+      try{
+        speechRecognition=new SpeechRecognition();speechRecognition.lang='zh-TW';speechRecognition.continuous=true;speechRecognition.interimResults=true;recognizing=true;
+        $('speechStatus').textContent='正在辨識周圍說話';$('speechStatus').style.color='var(--lime)';
+        speechRecognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const text=e.results[i][0].transcript.trim();if(e.results[i].isFinal){finalTranscript+=`<div class="transcript-line">${escapeHtml(text)}</div>`;}else{interim+=text;}}$('transcriptBox').innerHTML=(finalTranscript||'')+(interim?`<div class="transcript-line transcript-live">${escapeHtml(interim)}</div>`:'');$('transcriptBox').scrollTop=$('transcriptBox').scrollHeight;};
+        speechRecognition.onerror=e=>{$('speechStatus').textContent='辨識錯誤：'+e.error;$('speechStatus').style.color='var(--amber)';};
+        speechRecognition.onend=()=>{if(recognizing){try{speechRecognition.start()}catch(e){}}else{$('speechStatus').textContent='語音辨識已停止';$('speechStatus').style.color='var(--muted)';}};
+        speechRecognition.start();
+      }catch(err){$('speechStatus').textContent='啟動失敗：'+err.message;$('speechStatus').style.color='var(--red)';}
+    }
+    function stopSpeechRecognition(){recognizing=false;if(speechRecognition){try{speechRecognition.stop()}catch(e){}}$('speechStatus').textContent='語音辨識已停止';$('speechStatus').style.color='var(--muted)';}
+    function clearTranscript(){finalTranscript='';$('transcriptBox').innerHTML='<div class="muted">等待辨識周圍說話內容...</div>';}
+    function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+    function updateLiveBalance(){ $('liveBalanceVal').textContent=$('liveBalance').value; if(livePanNode&&audioCtx) livePanNode.pan.setTargetAtTime(Number($('liveBalance').value)/50,audioCtx.currentTime,.03); writeJson(); }
+    function writeJson(){const profile={createdAt:new Date().toISOString(),mode:document.querySelector('.mode.active')?.textContent||'日常',devices:{microphone:micStream?'granted':'not_granted',speaker:selectedSpeakerId||'default',browserSupportsOutputSelection:typeof HTMLMediaElement!=='undefined'&&'setSinkId' in HTMLMediaElement.prototype,speechRecognitionSupported:!!(window.SpeechRecognition||window.webkitSpeechRecognition)},calibration:{method:'ascending_from_soft_to_loud',currentLevelDb,levelStepDb,leftEar:freqs.map((f,i)=>({freq:f,thresholdDb:measuredLeft[i],confidence:i>3?.85:.92})),rightEar:freqs.map((f,i)=>({freq:f,thresholdDb:measuredRight[i],confidence:i>3?.84:.93}))},eqProfile:{source:'generated_from_measured_thresholds',leftEar:freqs.map((f,i)=>({freq:f,gainDb:eq[i],q:1})),rightEar:freqs.map((f,i)=>({freq:f,gainDb:Math.max(0,eq[i]-1),q:1}))},liveAssist:{enabled:liveActive,masterGainPercent:Number($('liveGain')?.value||70),leftRightBalance:Number($('liveBalance')?.value||0),lowFrequencyNoiseRemoval:{enabled:!!$('lowCutToggle')?.checked,cutoffHz:Number($('lowCutFreq')?.value||120)},speechClarity:{enabled:!!$('speechClarityToggle')?.checked,amountPercent:Number($('clarityAmount')?.value||55),presenceBoostDb:$('speechClarityToggle')?.checked?Number($('clarityAmount')?.value||55)/10:0},speechToText:{enabled:recognizing,language:'zh-TW'},manualEq:freqs.map((f,i)=>({freq:f,gainDb:manualEqGains[i],q:f<1000?.9:1.15}))},safety:{calibrationMaxDb:maxLevelDb,testToneMaxAmplitude:0.28,maxGainDb:18,limiterEnabled:true,noiseReduction:true,headphonesRecommended:true}};$('jsonOut').textContent=JSON.stringify(profile,null,2)}
+    ['voice','bright','noise','balance'].forEach(id=>$(id).oninput=e=>$(id+'Val').textContent=e.target.value);
+    $('liveGain').oninput=e=>{ $('liveGainVal').textContent=e.target.value; if(liveGainNode&&audioCtx) liveGainNode.gain.setTargetAtTime(Number(e.target.value)/100,audioCtx.currentTime,.02); writeJson(); };
+    $('liveBalance').oninput=updateLiveBalance;
+    $('lowCutFreq').oninput=updateLowCut;$('lowCutToggle').onchange=updateLowCut;$('clarityAmount').oninput=updateSpeechClarity;$('speechClarityToggle').onchange=updateSpeechClarity;
+    document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on')});
+    function initRuntime(){
+      const secure = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      const msg = secure
+        ? '目前是安全執行環境：電腦/手機可嘗試使用 MIC、即時輔聽與語音辨識。若要安裝成 App，可用瀏覽器「加入主畫面」。'
+        : '目前不是安全執行環境：UI 可運行，但手機/電腦的 MIC、即時輔聽、語音辨識可能被瀏覽器阻擋。請用 localhost 或 HTTPS 開啟。';
+      if($('secureStatus')) $('secureStatus').textContent = msg;
+      if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')){
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      }
+    }
+    updateCalib();drawAll();renderManualEq();writeJson();refreshDevices();initRuntime();
+  </script>
+</body>
+</html>
